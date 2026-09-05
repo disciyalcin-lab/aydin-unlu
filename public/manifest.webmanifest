@@ -1,0 +1,17 @@
+{
+  "name": "Aydın ÜNLÜ",
+  "short_name": "Aydın ÜNLÜ",
+  "description": "Oto tamirhane operasyon yönetimi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
