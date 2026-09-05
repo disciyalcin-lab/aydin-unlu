@@ -2,6 +2,7 @@
 
 import { Search, Bell, Plus, Wallet, Wrench, Clock3, Car, ClipboardCheck, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 
 type Stage = 'Beklenen' | 'Liftte' | 'Parça Bekliyor' | 'Bitti' | 'Teslim Edildi';
 
@@ -151,17 +152,46 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const saved = window.localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setVehicles(JSON.parse(saved));
-        return;
-      } catch {
-        // ignore malformed localStorage data and fall back to defaults
+    const loadVehicles = async () => {
+      if (hasSupabaseConfig && supabase) {
+        try {
+          const { data, error } = await supabase.from('vehicles').select('*').limit(20);
+          if (!error && data && data.length > 0) {
+            const mapped = data.map((vehicle: any) => ({
+              id: Number(vehicle.id ?? Date.now()),
+              plate: vehicle.plate ?? 'Plaka yok',
+              model: vehicle.model ?? 'Model yok',
+              customer: vehicle.customer ?? 'Müşteri',
+              note: vehicle.note ?? 'Not eklenmedi',
+              eta: vehicle.eta ?? '09:30',
+              stage: ['Beklenen', 'Liftte', 'Parça Bekliyor', 'Bitti', 'Teslim Edildi'].includes(vehicle.stage)
+                ? vehicle.stage
+                : 'Beklenen',
+              partsCost: Number(vehicle.parts_cost ?? vehicle.partsCost ?? 0),
+              laborCost: Number(vehicle.labor_cost ?? vehicle.laborCost ?? 0),
+            }));
+            setVehicles(mapped);
+            return;
+          }
+        } catch {
+          // fall back to local demo when Supabase is not ready yet
+        }
       }
-    }
 
-    setVehicles(defaultVehicles);
+      const saved = window.localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          setVehicles(JSON.parse(saved));
+          return;
+        } catch {
+          // ignore malformed localStorage data and fall back to defaults
+        }
+      }
+
+      setVehicles(defaultVehicles);
+    };
+
+    loadVehicles();
   }, []);
 
   useEffect(() => {
